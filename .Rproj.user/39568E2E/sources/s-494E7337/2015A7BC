@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1543188456958.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "2015A7BC",
+    "lastKnownWriteTime" : 1540423844,
+    "last_content_update" : 1540423844,
+    "path" : "~/KelpTime/app.R",
+    "project_path" : "app.R",
+    "properties" : {
+        "cursorPosition" : "41,5",
+        "scrollLine" : "19"
+    },
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
