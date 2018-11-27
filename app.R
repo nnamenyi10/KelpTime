@@ -12,11 +12,39 @@ ui <- fluidPage(
 
 server <- function(input, output, session) {
   
-  points <- select(rawData, "Latitude", "Longitude")
+  rawData <- read.csv("CleanData.csv", stringsAsFactors=FALSE)
+  site_slopes <- read.csv("eco_sites.csv", stringsAsFactors=FALSE) %>%
+    filter(Period == "1900-2015")
+  
+  rawDataFilt <- rawData %>%
+    dplyr::mutate(SiteName =  paste(Study, Site, study_ID,trajectory_ID,sep="-")) %>%
+    dplyr::mutate(SiteName = paste(SiteName, Study, sep=":")) %>%
+    group_by(Study, SiteName, Latitude, Longitude, Site) %>%
+    dplyr::summarise(Start = min(year), End = max(year)) %>%
+    ungroup() 
+  
+  
+  site_slopes_latlong <- left_join(site_slopes, rawDataFilt)
+  sum(is.na(site_slopes_latlong$Latitude))
+  
+  
+  ssl <- site_slopes_latlong %>%
+    filter(!is.na(Latitude)) %>%
+    filter(!is.na(Longitude)) %>%
+    mutate(lab = paste0(Study, ", ", Site, 
+                        "<br>",Start,"-",End,
+                        "<br>slope: ", round(mean,3), " ? ", round(se,3), "SE"))
+  
+  #points <- select(rawData, "Latitude", "Longitude")
   
   output$mymap <- renderLeaflet({
-    leaflet(data = rawData) %>% addTiles() %>%
-      addMarkers(~Longitude, ~Latitude, clusterOptions = markerClusterOptions())})}
+    leaflet() %>% addTiles() %>%
+      addCircleMarkers(data = ssl, 
+                 lng = ~Longitude, 
+                 lat = ~Latitude,
+                 opacity=1,
+                 color = ~colorQuantile("RdBu", ssl$mean, n = 20)(mean),
+                 popup = ~lab)})}
 
 shinyApp(ui, server)
 
