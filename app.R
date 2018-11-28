@@ -2,12 +2,35 @@ library(shiny)
 library(leaflet)
 library(dplyr)
 
-r_colors <- rgb(t(col2rgb(colors()) / 255))
-names(r_colors) <- colors()
 
 ui <- fluidPage(
-  leafletOutput("mymap"),
-  p()
+  headerPanel(title = "KELPTIME"),
+  mainPanel(
+    
+    leafletOutput("mymap")
+  ),
+  p(),
+  sidebarPanel(
+    
+    selectInput("bogustag2", "Bogus Dropdown:",
+                c("Option1" = "dref1",
+                  "Option2" = "dref2",
+                  "Option3" = "dref3")),
+    
+    selectInput("bogustag3", "Bogus Dropdown 2:",
+                c("Option1" = "dref1",
+                  "Option2" = "dref2",
+                  "Option3" = "dref3")),
+    
+    sliderInput("bogustag4", "Slider Title", 
+                min = 0, max = 100, value = 50, step = 1),
+    
+    checkboxInput("legendtag", "Show Legend", TRUE),
+    
+    actionButton("bogustag", "Bogus Button")
+  )
+ 
+  
 )
 
 server <- function(input, output, session) {
@@ -35,20 +58,31 @@ server <- function(input, output, session) {
                         "<br>",Start,"-",End,
                         "<br>slope: ", round(mean,3), " ? ", round(se,3), "SE"))
   
-  qpal <- colorQuantile("RdYlBu", ssl$mean, n = 20)
+  qpal <- colorQuantile("RdYlBu", ssl$mean, n = 11)
   
   output$mymap <- renderLeaflet({
     leaflet() %>% 
-      addTiles() %>%
+      addTiles(options = providerTileOptions(minZoom = 1, maxZoom = 10)) %>%
       addCircleMarkers(
         data = ssl, 
         lng = ~Longitude, 
         lat = ~Latitude,
         opacity=0.5,
         color = ~qpal(mean),
-        popup = ~lab) %>%
-      addLegend(, position = c("bottomright"), pal = qpal, values = ssl$mean) 
-    })}
+        popup = ~lab)
+  })
+  
+  #Show the legend if the checkbox is ticked 
+  observe({
+    proxy <- leafletProxy("mymap")
+    proxy %>% clearControls()
+    
+    if(input$legendtag) {
+      proxy %>% addLegend(position = "bottomright", pal = qpal, values = ssl$mean)
+    }
+  })  
+  
+}
 
 shinyApp(ui, server)
 
