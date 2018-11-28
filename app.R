@@ -35,16 +35,20 @@ server <- function(input, output, session) {
                         "<br>",Start,"-",End,
                         "<br>slope: ", round(mean,3), " ? ", round(se,3), "SE"))
   
-  #points <- select(rawData, "Latitude", "Longitude")
+  qpal <- colorQuantile("RdYlBu", ssl$mean, n = 20)
   
   output$mymap <- renderLeaflet({
-    leaflet() %>% addTiles() %>%
-      addCircleMarkers(data = ssl, 
-                 lng = ~Longitude, 
-                 lat = ~Latitude,
-                 opacity=1,
-                 color = ~colorQuantile("RdBu", ssl$mean, n = 20)(mean),
-                 popup = ~lab)})}
+    leaflet() %>% 
+      addTiles() %>%
+      addCircleMarkers(
+        data = ssl, 
+        lng = ~Longitude, 
+        lat = ~Latitude,
+        opacity=0.5,
+        color = ~qpal(mean),
+        popup = ~lab) %>%
+      addLegend(, position = c("bottomright"), pal = qpal, values = ssl$mean) 
+    })}
 
 shinyApp(ui, server)
 
