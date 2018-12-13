@@ -58,7 +58,7 @@ server <- function(input, output, session) {
                         "<br>",Start,"-",End,
                         "<br>slope: ", round(mean,3), " ? ", round(se,3), "SE"))
   
-  qpal <- colorQuantile("RdYlBu", ssl$mean, n = 11)
+  qpal <- colorNumeric(palette = c("red", "purple", "blue"), domain = ssl$mean, n = 11)
   
   output$mymap <- renderLeaflet({
     leaflet() %>% 
@@ -76,8 +76,9 @@ server <- function(input, output, session) {
   observe({
     proxy <- leafletProxy("mymap")
     proxy %>% clearControls()
-    
+    #lFormat <- labelFormat(digits = 2)
     if(input$legendtag) {
+      
       proxy %>% addLegend(position = "bottomright", pal = qpal, values = ssl$mean)
     }
   })  
