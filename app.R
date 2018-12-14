@@ -15,7 +15,7 @@ ui <- fluidPage(
     
     
     actionButton("applyButton", "Apply"),
-  
+    actionButton("resetButton", "Reset"),
     
     selectInput("bogustag3", "Bogus Dropdown 2:",
                 c("Option1" = "dref1",
@@ -94,13 +94,24 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$applyButton, {
-    print(input$ecoregionDrop)
     eco_subset <- ssl %>% filter(ECOREGION == input$ecoregionDrop & Start >= input$dateFilter[1] & End <= input$dateFilter[2])
     
     proxy <-leafletProxy("mymap")
     proxy %>% clearMarkers() 
     proxy %>% addCircleMarkers(
       data = eco_subset, 
+      lng = ~Longitude, 
+      lat = ~Latitude,
+      opacity = 0.5,
+      color = ~qpal(mean),
+      popup = ~lab)
+  })
+  
+  observeEvent(input$resetButton, {
+    proxy <-leafletProxy("mymap")
+    proxy %>% clearMarkers() 
+    proxy %>% addCircleMarkers(
+      data = filtered(), 
       lng = ~Longitude, 
       lat = ~Latitude,
       opacity = 0.5,
