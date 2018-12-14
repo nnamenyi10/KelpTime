@@ -17,10 +17,6 @@ ui <- fluidPage(
     actionButton("applyButton", "Apply"),
     actionButton("resetButton", "Reset"),
     
-    selectInput("bogustag3", "Bogus Dropdown 2:",
-                c("Option1" = "dref1",
-                  "Option2" = "dref2",
-                  "Option3" = "dref3")),
     
 
     sliderInput("dateFilter", "Filter by date:", 
@@ -31,7 +27,7 @@ ui <- fluidPage(
   ),
     
 
-  plotOutput("testplot", width = "50%")
+  plotOutput("testplot")
   
 )
 
@@ -79,8 +75,6 @@ server <- function(input, output, session) {
   })
   
   
-  twocols <- ecoregions[0:2]
-  output$testplot <- renderPlot({plot(twocols)})
   
   #Show the legend if the checkbox is ticked 
   observe({
