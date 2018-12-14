@@ -9,7 +9,6 @@ ui <- fluidPage(
     
     leafletOutput("mymap")
   ),
-  p(),
   sidebarPanel(
     
     selectInput("bogustag2", "Bogus Dropdown:",
@@ -22,6 +21,7 @@ ui <- fluidPage(
                   "Option2" = "dref2",
                   "Option3" = "dref3")),
     
+
     sliderInput("dateFilter", "Filter by date:", 
                 min = min(ssl["Start"]), max = max(ssl["Start"]), 
                 value = c(min(ssl["Start"]),max(ssl["Start"])), step = 1, sep=""),
@@ -29,8 +29,9 @@ ui <- fluidPage(
     checkboxInput("legendtag", "Show Legend", FALSE),
     
     actionButton("bogustag", "Bogus Button")
-  )
- 
+    ),
+  
+  plotOutput("testplot", width = "50%")
   
 )
 
@@ -80,6 +81,9 @@ server <- function(input, output, session) {
     #addLegend(position = "bottomright", pal = qpal, values = ssl$mean)
   })
   
+  
+  twocols <- ecoregions[0:2]
+  output$testplot <- renderPlot({plot(twocols)})
   
   #Show the legend if the checkbox is ticked 
   observe({
