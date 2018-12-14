@@ -13,12 +13,10 @@ ui <- fluidPage(
                 ecoregions["ECOREGION"]),
     
     
-    
     actionButton("applyButton", "Apply"),
     actionButton("resetButton", "Reset"),
     
     
-
     sliderInput("dateFilter", "Filter by date:", 
                 min = min(ssl["Start"]), max = max(ssl["Start"]), 
                 value = c(min(ssl["Start"]),max(ssl["Start"])), step = 1, sep=""),
