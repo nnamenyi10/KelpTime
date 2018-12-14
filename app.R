@@ -5,16 +5,17 @@ library(dplyr)
 
 ui <- fluidPage(
   headerPanel(title = "KELPTIME"),
-  mainPanel(
-    
-    leafletOutput("mymap")
-  ),
+  mainPanel(leafletOutput("mymap")),
+  
   sidebarPanel(
     
-    selectInput("bogustag2", "Bogus Dropdown:",
-                c("Option1" = "dref1",
-                  "Option2" = "dref2",
-                  "Option3" = "dref3")),
+    selectInput("ecoregionDrop", "Select Ecoregion:",
+                ecoregions["ECOREGION"]),
+    
+    
+    
+    actionButton("applyButton", "Apply"),
+  
     
     selectInput("bogustag3", "Bogus Dropdown 2:",
                 c("Option1" = "dref1",
@@ -25,12 +26,11 @@ ui <- fluidPage(
     sliderInput("dateFilter", "Filter by date:", 
                 min = min(ssl["Start"]), max = max(ssl["Start"]), 
                 value = c(min(ssl["Start"]),max(ssl["Start"])), step = 1, sep=""),
+   
+    checkboxInput("legendtag", "Show Legend", FALSE)
+  ),
     
-    checkboxInput("legendtag", "Show Legend", FALSE),
-    
-    actionButton("bogustag", "Bogus Button")
-    ),
-  
+
   plotOutput("testplot", width = "50%")
   
 )
@@ -44,14 +44,12 @@ server <- function(input, output, session) {
   rawDataFilt <- rawData %>%
     dplyr::mutate(SiteName =  paste(Study, Site, study_ID,trajectory_ID,sep="-")) %>%
     dplyr::mutate(SiteName = paste(SiteName, Study, sep=":")) %>%
-    group_by(Study, SiteName, Latitude, Longitude, Site) %>%
+    group_by(Study, SiteName, Latitude, Longitude, Site, ECOREGION) %>%
     dplyr::summarise(Start = min(year), End = max(year)) %>%
     ungroup() 
   
   
   site_slopes_latlong <- left_join(site_slopes, rawDataFilt)
-  sum(is.na(site_slopes_latlong$Latitude))
-  
   
   ssl <- site_slopes_latlong %>%
     filter(!is.na(Latitude)) %>%
@@ -62,11 +60,10 @@ server <- function(input, output, session) {
   
   qpal <- colorNumeric(palette = c("red", "purple", "blue"), domain = ssl$mean, n = 11)
   
-  filtered = reactive({
+  filtered <- reactive({
     updateCheckboxInput(session, "legendtag", value = FALSE)
     ssl[ssl$Start >= input$dateFilter[1] & ssl$End <= input$dateFilter[2], ]
   })
-  
   
   output$mymap <- renderLeaflet({
     leaflet() %>% 
@@ -94,7 +91,22 @@ server <- function(input, output, session) {
     if(input$legendtag) {
       proxy %>% addLegend(position = "bottomright", pal = qpal, values = ssl$mean)
     }
-  })  
+  })
+  
+  observeEvent(input$applyButton, {
+    print(input$ecoregionDrop)
+    eco_subset <- ssl %>% filter(ECOREGION == input$ecoregionDrop & Start >= input$dateFilter[1] & End <= input$dateFilter[2])
+    
+    proxy <-leafletProxy("mymap")
+    proxy %>% clearMarkers() 
+    proxy %>% addCircleMarkers(
+      data = eco_subset, 
+      lng = ~Longitude, 
+      lat = ~Latitude,
+      opacity = 0.5,
+      color = ~qpal(mean),
+      popup = ~lab)
+  })
 }
 
 shinyApp(ui, server)
