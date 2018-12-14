@@ -25,15 +25,14 @@ ui <- fluidPage(
   ),
     
 
-  plotOutput("testplot")
+  plotOutput("testplot", width="70%")
   
 )
 
 server <- function(input, output, session) {
   
   rawData <- read.csv("CleanDataWithRegions.csv", stringsAsFactors=FALSE)
-  site_slopes <- read.csv("eco_sites.csv", stringsAsFactors=FALSE) # %>%
-    #filter(Period == "1900-2015")
+  site_slopes <- read.csv("eco_sites.csv", stringsAsFactors=FALSE)
   
   rawDataFilt <- rawData %>%
     dplyr::mutate(SiteName =  paste(Study, Site, study_ID,trajectory_ID,sep="-")) %>%
@@ -54,8 +53,9 @@ server <- function(input, output, session) {
   
   qpal <- colorNumeric(palette = c("red", "purple", "blue"), domain = ssl$mean, n = 11)
   
-  filtered <- reactive({
-    updateCheckboxInput(session, "legendtag", value = FALSE)
+
+  filtered = reactive({
+    updateCheckboxInput(session, "legendtag", value = FALSE) #temporary hack to resolve disappearing legend
     ssl[ssl$Start >= input$dateFilter[1] & ssl$End <= input$dateFilter[2], ]
   })
   
@@ -69,8 +69,8 @@ server <- function(input, output, session) {
         opacity=0.5,
         color = ~qpal(mean),
         popup = ~lab)
-    #addLegend(position = "bottomright", pal = qpal, values = ssl$mean)
-  })
+      
+      })
   
   
   
@@ -110,6 +110,49 @@ server <- function(input, output, session) {
       color = ~qpal(mean),
       popup = ~lab)
   })
+
+  observe({
+    leafletProxy("mymap") %>% clearPopups()
+    click = input$mymap_marker_click
+    if(is.null(click))
+      return()
+    
+    # intentionally lose precision for map and data errors
+    lat = paste(click$lat)
+    long = paste(click$lng)
+
+    cat(file=stderr(), "Site:", lat, round(click$lat, 3), ",", long, round(click$lng, 3), "\n")
+    
+    plotting = rawData[abs(rawData$Latitude - click$lat) < 0.001 
+                       & abs(rawData$Longitude - click$lng) < 0.001, ]
+    
+    region = plotting$ECOREGION[[1]]
+    
+    plotting = select(plotting, rawDate, Stipe_Density_num_per_sq_m)
+    plotting = plotting[!is.na(plotting[[2]]),]
+    
+    if(length(plotting[[1]]) == 0) {
+     output$testplot = renderPlot(plot(0, 0, main="No relavant data points"))
+    }
+    else {
+      line = lm(formula = select(plotting, Stipe_Density_num_per_sq_m)[[1]] ~ select(plotting, rawDate)[[1]])
+      regions = rawData[rawData$ECOREGION == region, ]
+      regionLine = lm(formula = select(regions, Stipe_Density_num_per_sq_m)[[1]] ~ select(regions, rawDate)[[1]])
+      
+      #print(regions)
+      
+      #print(plotting) #select(plotting, rawDate, Stipe_Density_num_per_sq_m))
+      output$testplot = renderPlot({plot(select(plotting, rawDate, Stipe_Density_num_per_sq_m), 
+                                         main="Stipe Density Over Time", ylab = "Stipe Density Number pre Square Meter",
+                                         xlab = "Time")
+                                    abline(line[[1]][[1]], line[[1]][[2]], col="red")
+                                    abline(regionLine[[1]][[1]], regionLine[[1]][[2]], col="blue")
+                                    legend(x="topright", legend=c("Ecoregion", "site"), col=c("blue", "red"), lty=1:1)})
+      #line = lm(formula = select(plotting, Stipe_Density_num_per_sq_m)[[1]] ~ select(plotting, rawDate)[[1]])
+      # output$testplot.new
+      # output$testplot = abline(line)
+    }
+    })
 }
 
 shinyApp(ui, server)
