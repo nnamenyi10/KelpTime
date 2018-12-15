@@ -49,7 +49,7 @@ server <- function(input, output, session) {
     filter(!is.na(Longitude)) %>%
     mutate(lab = paste0(Study, ", ", Site, 
                         "<br>",Start,"-",End,
-                        "<br>slope: ", round(mean,3), " ? ", round(se,3), "SE"))
+                        "<br>slope: ", round(mean,3), " \u00B1 ", round(se,3), " SE"))
   
   qpal <- colorNumeric(palette = c("red", "purple", "blue"), domain = ssl$mean, n = 11)
   
@@ -81,7 +81,7 @@ server <- function(input, output, session) {
     
     
     if(input$legendtag) {
-      proxy %>% addLegend(position = "bottomright", pal = qpal, values = ssl$mean)
+      proxy %>% addLegend(position = "bottomright", pal = qpal, values = ssl$mean, title = "Mean")
     }
   })
   
